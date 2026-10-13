@@ -13,6 +13,7 @@ import {
 export function Courses() {
   const [revision, setRevision] = useState(0),
     [open, setOpen] = useState(false),
+    [semester, setSemester] = useState(""),
     [editing, setEditing] = useState<Course | null>(null);
   const {
     data: courses,
@@ -69,54 +70,91 @@ export function Courses() {
           </button>
         }
       />
+      <div className="filters" style={{ marginBottom: 25 }}>
+        <select
+          aria-label="筛选学期"
+          value={semester}
+          onChange={(e) => setSemester(e.target.value)}
+        >
+          <option value="">全部学期</option>
+          {Array.from(new Set(courses.map((c) => c.semester))).map((s) => (
+            <option key={s} value={s}>
+              {s || "未设学期"}
+            </option>
+          ))}
+        </select>
+      </div>
       <ErrorMessage error={error || failure} />
       {loading ? (
         <Loading />
       ) : courses.length ? (
         <div className="course-grid">
-          {courses.map((course) => (
-            <article
-              className="course-card"
-              key={course.id}
-              style={{ "--course-color": course.color } as React.CSSProperties}
-            >
-              <div className="course-card-top">
-                <span className="course-symbol">
-                  <BookOpen size={23} />
-                </span>
-                <span className="pill">{course.semester || "未设学期"}</span>
-              </div>
-              <span className="eyebrow">
-                {course.code || "PERSONAL COURSE"}
-              </span>
-              <h2>{course.name}</h2>
-              <p>{course.document_count || 0} 份资料</p>
-              <div className="course-card-footer">
-                <Link to={"/library?course=" + course.id}>
-                  进入课程 <ArrowUpRight size={15} />
-                </Link>
-                <div>
-                  <button
-                    className="icon-button"
-                    aria-label={"编辑 " + course.name}
-                    onClick={() => {
-                      setEditing(course);
-                      setOpen(true);
-                    }}
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    className="icon-button"
-                    aria-label={"删除 " + course.name}
-                    onClick={() => remove(course)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+          {courses
+            .filter((c) => !semester || c.semester === semester)
+            .map((course) => (
+              <article
+                className="course-card"
+                key={course.id}
+                style={
+                  { "--course-color": course.color } as React.CSSProperties
+                }
+              >
+                <div className="course-card-top">
+                  <span className="course-symbol">
+                    <BookOpen size={23} />
+                  </span>
+                  <span className="pill">{course.semester || "未设学期"}</span>
                 </div>
-              </div>
-            </article>
-          ))}
+                <span className="eyebrow">
+                  {course.code || "PERSONAL COURSE"}
+                </span>
+                <h2>{course.name}</h2>
+                <p>
+                  {course.document_count || 0} 份资料 · {course.note_count || 0}{" "}
+                  篇笔记 · {course.due_count || 0} 张待复习卡片
+                </p>
+                <div className="course-progress">
+                  <span>已作答 {course.answered_count || 0} 题</span>
+                  <span>
+                    {course.answered_count
+                      ? Math.round(
+                          (100 * (course.correct_count || 0)) /
+                            course.answered_count,
+                        ) + "% 正确（含自评）"
+                      : "尚无答题记录"}
+                  </span>
+                  <progress
+                    aria-label={course.name + " 答题正确率"}
+                    max={Math.max(1, course.answered_count || 0)}
+                    value={course.correct_count || 0}
+                  />
+                </div>
+                <div className="course-card-footer">
+                  <Link to={"/library?course=" + course.id}>
+                    进入课程 <ArrowUpRight size={15} />
+                  </Link>
+                  <div>
+                    <button
+                      className="icon-button"
+                      aria-label={"编辑 " + course.name}
+                      onClick={() => {
+                        setEditing(course);
+                        setOpen(true);
+                      }}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      className="icon-button"
+                      aria-label={"删除 " + course.name}
+                      onClick={() => remove(course)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
         </div>
       ) : (
         <Empty

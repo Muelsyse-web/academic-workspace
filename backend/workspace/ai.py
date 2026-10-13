@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .db import now,new_id
 from .search import search
 from .configuration import get_provider
-from .providers import ProviderError
+from .providers import ProviderError, ProviderCancelled
 from .citations import interpret_answer
 
 router=APIRouter(prefix='/api/v1')
@@ -139,8 +139,11 @@ def ask(identifier: str,body: MessageInput,request: Request):
             return save_message(db,identifier,'assistant','当前范围内没有足够的相关资料。请尝试更具体的课程关键词，或导入相关资料。','evidence_insufficient')
         messages=[{'role':'system','content':SYSTEM_PROMPT},*history,{'role':'user','content':json.dumps({'question':body.content,'evidence':evidence},ensure_ascii=False)}]
         try:
-            raw=get_provider(app).chat(messages)
+            provider=get_provider(app)
+            raw=provider.chat_cancellable(messages,cancel_event) if hasattr(provider,"chat_cancellable") else provider.chat(messages)
             answer,sources,status=interpret_answer(raw,evidence)
+        except ProviderCancelled:
+            answer,sources,status='本次回答已取消。',[],'cancelled'
         except ProviderError as exc:
             answer,sources,status=str(exc),[],'provider_error'
         if cancel_event.is_set():

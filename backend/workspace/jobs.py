@@ -45,6 +45,9 @@ class IndexWorker:
             units = parse_document(path,doc['kind'])
             version_id = new_id()
             has_text = any(unit['text'].strip() for unit in units)
+            title = doc['title']
+            if doc['active_version'] is None and title == Path(doc['filename']).stem:
+                title = next((unit['heading'].strip() for unit in units if unit['heading'].strip() and unit['heading'] != doc['blob_hash'] and len(unit['heading']) <= 150), title)
             with db.connect() as con:
                 con.execute('INSERT INTO document_versions VALUES (?,?,?,?)',(version_id,doc['id'],now(),'1'))
                 for unit in units:
@@ -60,7 +63,7 @@ class IndexWorker:
                         chunk_id = new_id()
                         con.execute('INSERT INTO chunks VALUES (?,?,?,?,?,?)',(chunk_id,unit_id,version_id,doc['id'],chunk,ordinal))
                         con.execute('INSERT INTO chunks_fts VALUES (?,?)',(chunk_id,index_text(chunk)))
-                con.execute('UPDATE documents SET active_version=?,status=? WHERE id=?',(version_id,'ready' if has_text else 'needs_attention',doc['id']))
+                con.execute('UPDATE documents SET active_version=?,status=?,title=CASE WHEN title=? THEN ? ELSE title END WHERE id=?',(version_id,'ready' if has_text else 'needs_attention',doc['title'],title,doc['id']))
                 con.execute("UPDATE jobs SET status='done',progress=100,error=NULL,updated_at=? WHERE id=?",(now(),job_id))
                 db.activity(con,'import','完成索引：'+doc['title'])
         except Exception as exc:

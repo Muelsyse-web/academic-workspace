@@ -11,4 +11,4 @@ if [ ! -f frontend/dist/index.html ]; then
   echo 'Frontend build missing. Run npm --prefix frontend run build.' >&2
   exit 1
 fi
-exec .venv/bin/python -m uvicorn workspace.app:create_app --factory --app-dir backend --host 127.0.0.1 --port "${WORKSPACE_PORT:-8765}" --no-access-log
+exec .venv/bin/python -m uvicorn workspace.app:create_app --factory --app-dir backend --host 127.0.0.1 --port "${WORKSPACE_PORT:-8767}" --no-access-log

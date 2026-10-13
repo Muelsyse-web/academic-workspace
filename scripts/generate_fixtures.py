@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generate only fictional, bilingual academic documents inside this project."""
 import argparse
+from io import BytesIO
 from pathlib import Path
 
 
@@ -28,6 +29,7 @@ def generate(output: Path):
     from docx import Document
     from pptx import Presentation
     from pptx.util import Inches, Pt
+    from PIL import Image, ImageDraw
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.cidfonts import UnicodeCIDFont
     from reportlab.pdfgen import canvas
@@ -54,6 +56,19 @@ def generate(output: Path):
             paragraph = frame.paragraphs[0] if index == 0 else frame.add_paragraph()
             paragraph.text = line
             paragraph.font.size = Pt(20)
+    # Purely synthetic pixels: a small coordinate plot exercises embedded-image
+    # previews without reading any private input or requiring an image service.
+    diagram = Image.new('RGB', (480, 180), '#f4f7f6')
+    draw = ImageDraw.Draw(diagram)
+    draw.line([(30, 15), (30, 150), (450, 150)], fill='#344c49', width=3)
+    curve = [(x, int(35 + 110 * ((x - 240) / 210) ** 2)) for x in range(40, 441)]
+    draw.line(curve, fill='#236a86', width=4)
+    for x, y in (curve[70], curve[125], curve[170], curve[200]):
+        draw.ellipse((x - 5, y - 5, x + 5, y + 5), fill='#d8673d')
+    image_bytes = BytesIO()
+    diagram.save(image_bytes, format='PNG')
+    image_bytes.seek(0)
+    deck.slides[0].shapes.add_picture(image_bytes, Inches(0.7), Inches(5.2), width=Inches(4.8))
     table = deck.slides[1].shapes.add_table(2, 2, Inches(0.6), Inches(5.4), Inches(8.7), Inches(1)).table
     for row, cells in enumerate([("Event 事件", "Probability 概率"), ("A given B", "0.4")]):
         for column, value in enumerate(cells):

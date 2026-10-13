@@ -1,7 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search as SearchIcon, ArrowUpRight } from "lucide-react";
-import { api, locationLabel, type Course, type SearchHit } from "../api";
+import {
+  api,
+  locationLabel,
+  type Course,
+  type SearchHit,
+  type Document,
+} from "../api";
 import {
   PageHeading,
   ErrorMessage,
@@ -9,17 +15,28 @@ import {
   Loading,
   useData,
 } from "../components/Shared";
+type ResultHit =
+  SearchHit | { note_id: string; title: string; text: string; kind: "note" };
 export function Search() {
   const [params] = useSearchParams(),
     [query, setQuery] = useState(params.get("q") || ""),
     [course, setCourse] = useState(params.get("course") || ""),
-    [kind, setKind] = useState("");
-  const [hits, setHits] = useState<SearchHit[]>([]),
+    [kind, setKind] = useState(""),
+    [documentId, setDocumentId] = useState(""),
+    [tag, setTag] = useState(""),
+    [target, setTarget] = useState("documents"),
+    [mode, setMode] = useState("keyword"),
+    [hint, setHint] = useState("关键词检索 · 无需 AI 模型");
+  const [hits, setHits] = useState<ResultHit[]>([]),
     [total, setTotal] = useState(0),
     [searched, setSearched] = useState(false),
     [loading, setLoading] = useState(false),
     [error, setError] = useState("");
   const { data: courses } = useData<Course[]>("/courses", []);
+  const { data: documents } = useData<Document[]>(
+    "/documents?course_id=" + course,
+    [],
+  );
   function resetResults() {
     setHits([]);
     setTotal(0);
@@ -30,14 +47,63 @@ export function Search() {
     setLoading(true);
     setError("");
     try {
-      const result = await api<{ hits: SearchHit[]; total: number }>(
-        "/search?" +
-          new URLSearchParams({
-            q: query,
-            course_id: course,
-            kind,
-            offset: String(offset),
+      let result: {
+        hits: ResultHit[];
+        total: number;
+        mode?: string;
+        warning?: string;
+        candidate_limit?: number;
+      };
+      if (target === "notes") {
+        const filters = new URLSearchParams({ q: query });
+        if (course) filters.set("course_id", course);
+        const notes = await api<{ id: string; title: string; body: string }[]>(
+          "/notes?" + filters,
+        );
+        result = {
+          mode: "notes",
+          total: notes.length,
+          hits: notes.slice(offset, offset + 20).map((note) => {
+            const at = Math.max(
+              0,
+              note.body.toLowerCase().indexOf(query.toLowerCase()) - 100,
+            );
+            return {
+              note_id: note.id,
+              title: note.title,
+              text: note.body.slice(at, at + 500),
+              kind: "note",
+            };
           }),
+        };
+      } else
+        result = await api<{
+          hits: SearchHit[];
+          total: number;
+          mode: string;
+          warning?: string;
+          candidate_limit?: number;
+        }>(
+          "/search?" +
+            new URLSearchParams({
+              q: query,
+              course_id: course,
+              document_id: documentId,
+              tag,
+              kind,
+              mode,
+              offset: String(offset),
+            }),
+        );
+      setHint(
+        result.warning ||
+          (result.mode === "hybrid"
+            ? "混合检索 · 最多 200 个候选片段"
+            : result.mode === "semantic"
+              ? "语义检索 · 本地 Embedding"
+              : result.mode === "notes"
+                ? "笔记全文检索"
+                : "关键词检索 · 无需 AI 模型"),
       );
       setHits(
         offset ? (previous) => [...previous, ...result.hits] : result.hits,
@@ -78,11 +144,37 @@ export function Search() {
         </div>
         <div className="filters">
           <select
+            aria-label="搜索内容类型"
+            value={target}
+            disabled={loading}
+            onChange={(e) => {
+              setTarget(e.target.value);
+              resetResults();
+            }}
+          >
+            <option value="documents">资料内容</option>
+            <option value="notes">学习笔记</option>
+          </select>
+          <select
+            aria-label="检索方式"
+            value={mode}
+            disabled={loading || target === "notes"}
+            onChange={(e) => {
+              setMode(e.target.value);
+              resetResults();
+            }}
+          >
+            <option value="keyword">关键词</option>
+            <option value="semantic">语义</option>
+            <option value="hybrid">混合</option>
+          </select>
+          <select
             aria-label="搜索课程"
             value={course}
             disabled={loading}
             onChange={(e) => {
               setCourse(e.target.value);
+              setDocumentId("");
               resetResults();
             }}
           >
@@ -109,7 +201,33 @@ export function Search() {
               </option>
             ))}
           </select>
-          <span className="subtle">关键词检索 · 无需 AI 模型</span>
+          <select
+            aria-label="指定文件"
+            disabled={loading || target === "notes"}
+            value={documentId}
+            onChange={(e) => {
+              setDocumentId(e.target.value);
+              resetResults();
+            }}
+          >
+            <option value="">全部文件</option>
+            {documents.map((d) => (
+              <option key={d.id} value={d.id}>
+                [{d.kind.toUpperCase()}] {d.title} · {d.filename}
+              </option>
+            ))}
+          </select>
+          <input
+            aria-label="搜索标签"
+            placeholder="标签（可选）"
+            disabled={loading || target === "notes"}
+            value={tag}
+            onChange={(e) => {
+              setTag(e.target.value);
+              resetResults();
+            }}
+          />
+          <span className="subtle">{hint}</span>
         </div>
       </form>
       <ErrorMessage error={error} />
@@ -124,15 +242,26 @@ export function Search() {
           {hits.length ? (
             <div className="search-results">
               {hits.map((hit) => (
-                <article className="search-result" key={hit.chunk_id}>
+                <article
+                  className="search-result"
+                  key={"note_id" in hit ? hit.note_id : hit.chunk_id}
+                >
                   <div className="result-meta">
                     <span className={"file-badge " + hit.kind}>
                       {hit.kind.toUpperCase()}
                     </span>
-                    <span>{locationLabel(hit.locator_type, hit.locator)}</span>
+                    <span>
+                      {"note_id" in hit
+                        ? "学习笔记"
+                        : locationLabel(hit.locator_type, hit.locator)}
+                    </span>
                   </div>
                   <Link
-                    to={`/documents/${hit.document_id}?version=${hit.version_id}&locator=${hit.locator}`}
+                    to={
+                      "note_id" in hit
+                        ? `/notes?id=${hit.note_id}`
+                        : `/documents/${hit.document_id}?version=${hit.version_id}&locator=${hit.locator}`
+                    }
                   >
                     <h3>{hit.title}</h3>
                     <ArrowUpRight size={18} />

@@ -29,7 +29,9 @@ def search(db,q,course_id='',document_id='',kind='',limit=20,offset=0,tag=''):
     if tag:
         clauses.append('EXISTS(SELECT 1 FROM json_each(d.tags) WHERE value=?)'); args.append(tag)
     terms = re.findall(r'[^\W_]+',query,flags=re.UNICODE)[:40]
-    expression = ' OR '.join('"'+term.replace('"','""')+'"' for term in terms)
+    fragments=[run[i:i+2] for run in re.findall(r'[\u3400-\u9fff]+',query) for i in range(len(run)-1)]
+    fts_terms=list(dict.fromkeys(terms+fragments))[:80]
+    expression = ' OR '.join('"'+term.replace('"','""')+'"' for term in fts_terms)
     cte = 'WITH matched AS MATERIALIZED (SELECT chunk_id,bm25(chunks_fts) score FROM chunks_fts WHERE chunks_fts MATCH ?) '
     prefix_args = [expression]
     if not terms:

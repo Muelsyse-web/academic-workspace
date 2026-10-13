@@ -11,9 +11,13 @@ import {
   GraduationCap,
   ShieldCheck,
   NotebookPen,
+  Layers,
   MessageSquare,
   Settings as SettingsIcon,
 } from "lucide-react";
+const Learning = lazy(() =>
+  import("./pages/Learning").then((m) => ({ default: m.Learning })),
+);
 const Chat = lazy(() =>
   import("./pages/Chat").then((m) => ({ default: m.Chat })),
 );
@@ -73,6 +77,7 @@ export default function App() {
               [Search, "/search", "知识搜索"],
               [NotebookPen, "/notes", "学习笔记"],
               [MessageSquare, "/chat", "AI 学术问答"],
+              [Layers, "/learning", "练习与复习"],
               [SettingsIcon, "/settings", "设置"],
             ].map(([Icon, to, label]) => {
               const Glyph = Icon as typeof BookOpen;
@@ -148,6 +153,7 @@ export default function App() {
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/notes" element={<Notes />} />
                 <Route path="/chat" element={<Chat />} />
+                <Route path="/learning" element={<Learning />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/documents/:id" element={<DocumentView />} />
                 <Route

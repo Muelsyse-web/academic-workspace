@@ -1,6 +1,7 @@
 """Original-preserving imports and document metadata/source access."""
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Annotated
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
@@ -46,6 +47,9 @@ def import_documents(request: Request, files: Annotated[list[UploadFile],File()]
         raise HTTPException(422,'Import at most 100 files per batch')
     # Prevalidate batch types before writing any originals.
     for file in files:
+        relative = (file.filename or '').replace('\\','/')
+        if relative.startswith('/') or '..' in relative.split('/') or re.match(r'^[A-Za-z]:',relative) or len(relative)>2048:
+            raise HTTPException(422,'Folder paths must be relative and cannot contain traversal')
         if Path(file.filename or '').suffix.lower().lstrip('.') not in KINDS:
             raise HTTPException(422,'Supported formats: PDF, PPTX, DOCX, TXT, Markdown')
     originals = db.root/'originals'
@@ -55,6 +59,7 @@ def import_documents(request: Request, files: Annotated[list[UploadFile],File()]
     result = []
     for file in files:
         name = (file.filename or 'Untitled').replace('\\','/').split('/')[-1]
+        relative = (file.filename or name).replace('\\','/')
         kind = Path(name).suffix.lower().lstrip('.')
         temporary = incoming/new_id()
         sha = hashlib.sha256()
@@ -74,7 +79,7 @@ def import_documents(request: Request, files: Annotated[list[UploadFile],File()]
                     identifier = doc['id']
                     job_id = None
                     if doc['status'] in ('failed','needs_attention') and doc['kind'] != kind:
-                        con.execute('UPDATE documents SET kind=?,filename=?,title=? WHERE id=?',(kind,name,Path(name).stem,identifier))
+                        con.execute('UPDATE documents SET kind=?,filename=?,title=?,relative_path=? WHERE id=?',(kind,name,Path(name).stem,relative,identifier))
                         job_id = queue_job(con,identifier)
                 else:
                     identifier = new_id()
@@ -82,7 +87,7 @@ def import_documents(request: Request, files: Annotated[list[UploadFile],File()]
                     if not target.exists():
                         temporary.replace(target)
                     con.execute('INSERT OR IGNORE INTO blobs VALUES (?,?,?,?)',(checksum,size,kind,now()))
-                    con.execute('INSERT INTO documents(id,blob_hash,title,filename,kind,created_at) VALUES (?,?,?,?,?,?)',(identifier,checksum,Path(name).stem,name,kind,now()))
+                    con.execute('INSERT INTO documents(id,blob_hash,title,filename,kind,created_at,relative_path) VALUES (?,?,?,?,?,?,?)',(identifier,checksum,Path(name).stem,name,kind,now(),relative))
                     job_id = queue_job(con,identifier)
                 if course_id:
                     con.execute('INSERT OR IGNORE INTO document_courses VALUES (?,?)',(identifier,course_id))
@@ -96,7 +101,7 @@ def import_documents(request: Request, files: Annotated[list[UploadFile],File()]
 
 
 @router.get('/documents')
-def documents(request: Request,course_id: str='',kind: str='',q: str='',tag: str=''):
+def documents(request: Request,course_id: str='',kind: str='',q: str='',tag: str='',topic: str=''):
     db = request.app.state.db
     clauses, args = ['1=1'], []
     if course_id:
@@ -108,6 +113,8 @@ def documents(request: Request,course_id: str='',kind: str='',q: str='',tag: str
     if q:
         clauses.append('instr(lower(d.title),lower(?))>0')
         args.append(q)
+    if topic:
+        clauses.append('d.topic=?');args.append(topic)
     if tag:
         clauses.append('EXISTS(SELECT 1 FROM json_each(d.tags) WHERE value=?)')
         args.append(tag)

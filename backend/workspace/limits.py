@@ -11,7 +11,7 @@ class RequestLimits:
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http':
             return await self.app(scope,receive,send)
-        maximum = self.max_bytes if self.max_bytes is not None else (4*1024**3+33*1024**2 if scope['path']=='/api/v1/restore' else 256*1024**2)
+        maximum = self.max_bytes if self.max_bytes is not None else (4*1024**3+33*1024**2 if scope['path'] in ('/api/v1/restore','/api/v1/portable/import') else 256*1024**2)
         headers = dict(scope['headers'])
         try:
             declared = int(headers.get(b'content-length',b'0'))

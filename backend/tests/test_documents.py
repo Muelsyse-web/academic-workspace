@@ -89,3 +89,25 @@ def test_plain_document_heading_uses_filename_not_storage_hash(tmp_path):
         uploaded=upload(c,'Lesson.docx',data.getvalue())
         unit=c.get('/api/v1/documents/'+uploaded['id']+'/units').json()[0]
         assert unit['heading']=='Lesson'
+
+
+def test_extracted_title_and_topic_filter_preserve_manual_title(tmp_path):
+    with TestClient(create_app(tmp_path),base_url='http://localhost') as c:
+        login(c)
+        doc=upload(c,'untitled-upload.md',b'# Bayesian inference\nBayes combines likelihood and prior.')
+        assert doc['title']=='Bayesian inference'
+        c.patch('/api/v1/documents/'+doc['id'],json={'title':'My edited title','topic':'Probability'})
+        assert c.get('/api/v1/documents',params={'topic':'Other'}).json()==[]
+        assert c.get('/api/v1/documents',params={'topic':'Probability'}).json()[0]['id']==doc['id']
+        c.post('/api/v1/documents/'+doc['id']+'/reindex')
+        assert wait_document(c,doc['id'])['title']=='My edited title'
+
+
+def test_folder_relative_path_is_metadata_not_storage_path(tmp_path):
+    with TestClient(create_app(tmp_path),base_url='http://localhost') as c:
+        login(c)
+        doc=upload(c,'semester/course/lecture.md',b'# Folder lecture\nLocal source')
+        assert doc['relative_path']=='semester/course/lecture.md'
+        assert doc['filename']=='lecture.md'
+        assert c.get('/api/v1/documents/'+doc['id']+'/original').content==b'# Folder lecture\nLocal source'
+        assert c.post('/api/v1/documents',files={'files':('../escape.md',b'bad')}).status_code==422

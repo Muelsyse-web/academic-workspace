@@ -4,7 +4,7 @@ import { vi, it, expect } from "vitest";
 import { Search } from "./Search";
 vi.mock("../api", () => ({
   api: vi.fn(async (path: string) =>
-    path === "/courses"
+    path === "/courses" || path.startsWith("/documents")
       ? []
       : {
           mode: "keyword",

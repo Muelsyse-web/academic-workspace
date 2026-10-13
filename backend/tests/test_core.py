@@ -84,3 +84,89 @@ def test_new_tab_bootstrap_keeps_existing_tabs_csrf_valid(tmp_path):
         assert new_tab.json()['csrf_token']==old_csrf
         assert c.cookies.get('workspace_session')==old_cookie
         assert c.post('/api/v1/courses',json={'name':'Older tab still saves'}).status_code==201
+
+
+def test_restore_cannot_overtake_an_admitted_request(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+    from fastapi import APIRouter
+    app=create_app(tmp_path)
+    entered=threading.Event();release=threading.Event()
+    router=APIRouter()
+    @router.post('/api/v1/held-request')
+    def held():
+        entered.set()
+        release.wait(timeout=5)
+        return {'done':True}
+    app.router.routes[0:0]=router.routes
+    with TestClient(app,base_url='http://localhost') as c:
+        login(c)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future=pool.submit(c.post,'/api/v1/held-request')
+            assert entered.wait(timeout=3)
+            try:
+                response=c.post('/api/v1/restore',files={'archive':('unused.zip',b'not-read')},data={'confirm':'RESTORE'})
+                assert response.status_code==409
+            finally:
+                release.set()
+            assert future.result(timeout=3).status_code==200
+
+
+def test_new_requests_are_rejected_while_restore_owns_admission(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+    from fastapi import APIRouter
+    app=create_app(tmp_path)
+    entered=threading.Event();release=threading.Event()
+    router=APIRouter()
+    @router.post('/api/v1/restore')
+    def held_restore():
+        entered.set();release.wait(timeout=5)
+        return {'status':'test-only'}
+    app.router.routes[0:0]=router.routes
+    with TestClient(app,base_url='http://localhost') as c:
+        login(c)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future=pool.submit(c.post,'/api/v1/restore')
+            assert entered.wait(timeout=3)
+            try:assert c.get('/api/v1/courses').status_code==409
+            finally:release.set()
+            assert future.result(timeout=3).status_code==200
+        assert c.get('/api/v1/courses').status_code==200
+
+
+def test_course_progress_comes_from_actual_learning_records(tmp_path):
+    with TestClient(create_app(tmp_path),base_url='http://localhost') as c:
+        login(c)
+        course=c.post('/api/v1/courses',json={'name':'Progress'}).json()
+        c.post('/api/v1/notes',json={'title':'Understanding','course_id':course['id']})
+        card=c.post('/api/v1/flashcards',json={'front':'Question','back':'Answer','course_id':course['id']}).json()
+        quiz=c.post('/api/v1/quizzes',json={'title':'Check','course_id':course['id'],'questions':[{'kind':'single','prompt':'Choose A','options':['A','B'],'correct_indices':[0]}]}).json()
+        c.post('/api/v1/quizzes/'+quiz['id']+'/attempts',json={'answers':[{'question_id':quiz['questions'][0]['id'],'selected':[0]}]})
+        progress=c.get('/api/v1/courses').json()[0]
+        assert progress['note_count']==1
+        assert progress['due_count']==1
+        assert progress['answered_count']==1 and progress['correct_count']==1
+        c.post('/api/v1/flashcards/'+card['id']+'/review',json={'rating':'good'})
+        assert c.get('/api/v1/courses').json()[0]['due_count']==0
+        activity=c.get('/api/v1/dashboard').json()['activities']
+        assert any(row['kind']=='review' for row in activity)
+
+
+def test_security_headers_and_sanitized_rotating_diagnostics(tmp_path):
+    from fastapi import APIRouter
+    app=create_app(tmp_path)
+    route=APIRouter()
+    @route.get('/api/v1/test-error')
+    def test_error():raise ValueError('PRIVATE_COURSE_SECRET')
+    app.router.routes[0:0]=route.routes
+    with TestClient(app,base_url='http://localhost',raise_server_exceptions=False) as c:
+        login(c)
+        health=c.get('/api/v1/health')
+        assert "script-src 'self'" in health.headers['content-security-policy']
+        assert health.headers['x-content-type-options']=='nosniff'
+        error=c.get('/api/v1/test-error')
+        assert error.status_code==500
+        assert 'PRIVATE_COURSE_SECRET' not in error.text
+    logs=(tmp_path/'logs'/'workspace.log').read_text()
+    assert 'ValueError' in logs and 'PRIVATE_COURSE_SECRET' not in logs

@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from .db import Database
 from .limits import RequestLimits
+from .admission import RequestActivity
+from .diagnostics import Diagnostics,install_log,close_log
 from .jobs import IndexWorker
 from .embeddings import EmbeddingWorker,router as embeddings_router
 from .documents import router as documents_router
@@ -15,7 +17,10 @@ from .security import LocalSecurity, router as security_router
 from .courses import router as courses_router
 from .notes import router as notes_router
 from .learning import router as learning_router
+from .generation import router as generation_router
 from .backup import router as backup_router
+from .portable import router as portable_router
+from .previews import router as previews_router
 from .ai import router as ai_router
 from .configuration import router as configuration_router
 
@@ -32,6 +37,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app):
+        log_handler=install_log(db.root)
         app.state.index_worker = IndexWorker(db)
         app.state.index_worker.recover()
         app.state.embedding_worker = EmbeddingWorker(app)
@@ -40,6 +46,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         finally:
             app.state.index_worker.close()
             app.state.embedding_worker.close()
+            close_log(log_handler)
 
     app = FastAPI(title='Local Academic Workspace',version='0.1.0',lifespan=lifespan,docs_url=None,redoc_url=None,openapi_url='/api/v1/openapi.json')
     app.state.db = db
@@ -47,14 +54,19 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     app.state.conversation_locks = {}
     app.state.conversation_cancels = {}
     app.add_middleware(RequestLimits)
+    app.add_middleware(RequestActivity)
     app.add_middleware(LocalSecurity)
+    app.add_middleware(Diagnostics)
     app.include_router(security_router)
     app.include_router(courses_router)
     app.include_router(documents_router)
     app.include_router(search_router)
     app.include_router(notes_router)
     app.include_router(learning_router)
+    app.include_router(generation_router)
     app.include_router(backup_router)
+    app.include_router(portable_router)
+    app.include_router(previews_router)
     app.include_router(ai_router)
     app.include_router(configuration_router)
     app.include_router(embeddings_router)

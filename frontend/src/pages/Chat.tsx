@@ -69,7 +69,7 @@ export function Chat() {
     error: loadError,
     loading,
   } = useData<Conversation | null>(
-    id ? "/conversations/" + id : "/conversations",
+    id ? "/conversations/" + id : null,
     null,
     revision,
   );

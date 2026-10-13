@@ -253,6 +253,7 @@ def review_flashcard(identifier: str, data: ReviewInput, request: Request):
         con.execute('''UPDATE flashcards SET due_at=?,ease=?,repetitions=?,interval_days=?,updated_at=? WHERE id=?''',
                     (schedule['due_at'], schedule['ease'], schedule['repetitions'], schedule['interval_days'], timestamp, identifier))
         con.execute('INSERT INTO reviews ('+','.join(result)+') VALUES ('+','.join('?' for _ in result)+')', tuple(result.values()))
+        request.app.state.db.activity(con,'review','复习卡片：'+card['front'][:80])
         return result
 
 
@@ -381,6 +382,7 @@ def submit_attempt(identifier: str, data: AttemptInput, request: Request):
         con.executemany('INSERT INTO attempt_answers VALUES (?,?,?,?,?,?,?,?,?)',
                         [(attempt_id, q['id'], i, q['topic'], _json(a.selected), a.text, a.self_correct, correct, _json(q))
                          for i, (q, a, correct) in enumerate(graded)])
+        request.app.state.db.activity(con,'quiz','完成练习：'+quiz['title'])
         return _attempt(con, attempt_id)
 
 

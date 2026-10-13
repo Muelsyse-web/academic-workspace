@@ -60,3 +60,11 @@ def test_spaced_chinese_terms_match_continuous_source_text(tmp_path):
         doc=upload(c,'chinese.txt','梯度下降使用导数优化参数'.encode())
         result=c.get('/api/v1/search',params={'q':'梯度 参数'}).json()
         assert result['hits'][0]['document_id']==doc['id']
+
+
+def test_natural_chinese_question_uses_indexed_character_fragments(tmp_path):
+    with TestClient(create_app(tmp_path),base_url='http://localhost') as c:
+        login(c)
+        doc=upload(c,'concept.txt','梯度下降利用导数优化参数。'.encode())
+        result=c.get('/api/v1/search',params={'q':'什么是梯度下降？'}).json()
+        assert result['hits'] and result['hits'][0]['document_id']==doc['id']

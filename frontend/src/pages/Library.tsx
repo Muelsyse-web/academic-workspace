@@ -1,3 +1,4 @@
+import { partitionUploads } from "../uploads";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Upload, FolderUp, Star, ArrowUpRight, RefreshCw } from "lucide-react";
@@ -21,6 +22,8 @@ export function Library() {
     [course, setCourse] = useState(params.get("course") || ""),
     [kind, setKind] = useState(""),
     [query, setQuery] = useState(""),
+    [topic, setTopic] = useState(""),
+    [tag, setTag] = useState(""),
     [revision, setRevision] = useState(0),
     [uploading, setUploading] = useState(false),
     [error, setError] = useState(""),
@@ -32,7 +35,8 @@ export function Library() {
     error: loadError,
     loading,
   } = useData<Document[]>(
-    "/documents?" + new URLSearchParams({ course_id: course, kind, q: query }),
+    "/documents?" +
+      new URLSearchParams({ course_id: course, kind, q: query, topic, tag }),
     [],
     revision,
   );
@@ -56,13 +60,11 @@ export function Library() {
       return;
     }
     try {
-      for (let start = 0; start < accepted.length; start += 100) {
+      for (const batch of partitionUploads(accepted)) {
         const form = new FormData();
-        accepted
-          .slice(start, start + 100)
-          .forEach((file) =>
-            form.append("files", file, file.webkitRelativePath || file.name),
-          );
+        batch.forEach((file) =>
+          form.append("files", file, file.webkitRelativePath || file.name),
+        );
         form.append("course_id", course);
         await api("/documents", { method: "POST", body: form });
       }
@@ -70,6 +72,7 @@ export function Library() {
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      setRevision((v) => v + 1);
       setUploading(false);
       if (fileInput.current) fileInput.current.value = "";
       if (folderInput.current) folderInput.current.value = "";
@@ -189,6 +192,20 @@ export function Library() {
           <RefreshCw size={17} />
         </button>
       </div>
+      <div className="filters" style={{ marginBottom: 20 }}>
+        <input
+          aria-label="按知识主题筛选"
+          placeholder="知识主题（精确匹配）"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+        />
+        <input
+          aria-label="按标签筛选"
+          placeholder="标签（精确匹配）"
+          value={tag}
+          onChange={(e) => setTag(e.target.value)}
+        />
+      </div>
       <ErrorMessage error={error || loadError} />
       <div className="section-heading">
         <h2>
@@ -208,7 +225,8 @@ export function Library() {
               <Link className="grow" to={"/documents/" + doc.id}>
                 <strong>{doc.title}</strong>
                 <small>
-                  {doc.topic || doc.filename} {doc.tags.map((t) => " · " + t)}
+                  {doc.topic || doc.relative_path || doc.filename}{" "}
+                  {doc.tags.map((t) => " · " + t)}
                 </small>
               </Link>
               <span className={"status " + doc.status}>

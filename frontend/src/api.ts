@@ -20,27 +20,36 @@ export async function connect() {
 export async function api<T>(
   path: string,
   options: RequestInit = {},
+  retry = true,
 ): Promise<T> {
   await connect();
   const headers = new Headers(options.headers);
   if (options.body && !(options.body instanceof FormData))
     headers.set("Content-Type", "application/json");
-  headers.set("X-CSRF-Token", csrf);
+  const requestCsrf = csrf;
+  headers.set("X-CSRF-Token", requestCsrf);
   const response = await fetch("/api/v1" + path, {
     ...options,
     headers,
     credentials: "same-origin",
   });
   if (!response.ok) {
-    if (response.status === 401) {
-      session = null;
-      csrf = "";
-    }
     let detail: unknown;
     try {
       detail = (await response.json()).detail;
     } catch {
       detail = response.statusText;
+    }
+    if (
+      retry &&
+      (response.status === 401 ||
+        (response.status === 403 && detail === "CSRF token required"))
+    ) {
+      if (csrf === requestCsrf) {
+        session = null;
+        csrf = "";
+      }
+      return api<T>(path, options, false);
     }
     throw new Error(
       typeof detail === "string" ? detail : JSON.stringify(detail),
@@ -58,11 +67,17 @@ export type Course = {
   semester: string;
   color: string;
   document_count?: number;
+  note_count?: number;
+  card_count?: number;
+  due_count?: number;
+  answered_count?: number;
+  correct_count?: number;
 };
 export type Document = {
   id: string;
   title: string;
   filename: string;
+  relative_path?: string;
   kind: string;
   status: string;
   active_version: string | null;

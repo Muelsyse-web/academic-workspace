@@ -146,8 +146,13 @@ export function Dashboard() {
                   <span className="eyebrow">{c.code || c.semester}</span>
                   <h3>{c.name}</h3>
                   <p>
-                    {c.document_count || 0} 份资料 · {c.semester}
+                    {c.document_count || 0} 份资料 · {c.note_count || 0} 篇笔记
+                    · {c.semester}
                   </p>
+                  <div className="course-progress">
+                    <span>待复习 {c.due_count || 0} 张</span>
+                    <span>已作答 {c.answered_count || 0} 题</span>
+                  </div>
                 </Link>
               ))}
             </div>

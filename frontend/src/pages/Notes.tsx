@@ -1,14 +1,10 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { Plus, Save, Download, Trash2, Link2 } from "lucide-react";
 import { api, locationLabel, type Course } from "../api";
-import {
-  useData,
-  PageHeading,
-  ErrorMessage,
-  Empty,
-} from "../components/Shared";
+import { useData, PageHeading, ErrorMessage } from "../components/Shared";
 import { Markdown } from "../components/Markdown";
+import { SourcePicker } from "../components/SourcePicker";
 type Source = {
   document_id: string;
   version_id: string;
@@ -47,12 +43,27 @@ export function Notes() {
     [revision, setRevision] = useState(0),
     [query, setQuery] = useState(""),
     [course, setCourse] = useState(""),
-    [note, setNote] = useState<Note>(blank),
-    [dirty, setDirty] = useState(false),
+    [note, setNote] = useState<Note>(() => {
+      const source = location.state?.source as Source | undefined;
+      return source
+        ? {
+            ...blank(),
+            title: location.state.title || "引用笔记",
+            body: "> " + source.quote,
+            sources: [source],
+            course_id: location.state.course_id || null,
+          }
+        : blank();
+    }),
+    [dirty, setDirty] = useState(Boolean(location.state?.source)),
     [busy, setBusy] = useState(false),
+    [pickerOpen, setPickerOpen] = useState(false),
+    [linkChoices, setLinkChoices] = useState<Record<string, string>>({}),
     [error, setError] = useState(""),
     [status, setStatus] = useState("");
   const id = params.get("id") || "";
+  const draftRevision = useRef(0);
+  const loadingNote = Boolean(id && note.id !== id);
   const filters = new URLSearchParams({ q: query });
   if (course) filters.set("course_id", course);
   const { data: notes, error: listError } = useData<Note[]>(
@@ -60,35 +71,35 @@ export function Notes() {
       [],
       revision,
     ),
-    { data: courses } = useData<Course[]>("/courses", []);
+    { data: courses } = useData<Course[]>("/courses", []),
+    {
+      data: allNotes,
+      error: targetsError,
+      loading: targetsLoading,
+    } = useData<Note[]>("/notes", [], revision);
   useEffect(() => {
     let active = true;
+    const requestedRevision = draftRevision.current;
+    setLinkChoices({});
+    setPickerOpen(false);
     if (id) {
       api<Note>("/notes/" + id)
         .then((n) => {
-          if (active) {
+          if (active && draftRevision.current === requestedRevision) {
             setNote(n);
             setDirty(false);
             setStatus("已保存");
           }
         })
         .catch((e) => setError(e.message));
-    } else {
-      const source = location.state?.source as Source | undefined;
-      setNote({
-        ...blank(),
-        ...(source
-          ? {
-              title: location.state.title || "引用笔记",
-              body: "> " + source.quote,
-              sources: [source],
-              course_id: location.state.course_id || null,
-            }
-          : {}),
-      });
-      setDirty(Boolean(source));
+    } else if (note.id) {
+      // Manual New already clears the draft. Do not clear it a second time
+      // when a deferred router update commits after the user starts typing.
+      setNote(blank());
+      setDirty(false);
       setStatus("");
     }
+
     return () => {
       active = false;
     };
@@ -115,6 +126,7 @@ export function Notes() {
     };
   }, [dirty]);
   function edit(update: Partial<Note>) {
+    draftRevision.current += 1;
     setNote((n) => ({ ...n, ...update }));
     setDirty(true);
     setStatus("未保存");
@@ -168,6 +180,38 @@ export function Notes() {
       setRevision((v) => v + 1);
     } catch (e) {
       setError((e as Error).message);
+    }
+  }
+  async function resolveLink(rawTitle: string) {
+    const targetId = linkChoices[rawTitle];
+    if (dirty || busy || !note.id || !targetId) return;
+    const sourceId = note.id;
+    setBusy(true);
+    setError("");
+    try {
+      const saved = await api<Note>(
+        `/notes/${encodeURIComponent(sourceId)}/links`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ raw_title: rawTitle, target_id: targetId }),
+        },
+      );
+      // Updating links must not overwrite edits made while the request is pending.
+      setNote((current) =>
+        current.id === sourceId
+          ? {
+              ...current,
+              outgoing_links: saved.outgoing_links,
+              backlinks: saved.backlinks,
+              unresolved_links: saved.unresolved_links,
+            }
+          : current,
+      );
+      setRevision((value) => value + 1);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setBusy(false);
     }
   }
   return (
@@ -250,7 +294,7 @@ export function Notes() {
                   </button>
                 </>
               )}
-              <button className="primary" disabled={busy}>
+              <button className="primary" disabled={busy || loadingNote}>
                 <Save size={16} />
                 {busy ? "保存中…" : "保存笔记"}
               </button>
@@ -259,6 +303,7 @@ export function Notes() {
           <input
             className="note-title-input"
             aria-label="笔记标题"
+            disabled={busy || loadingNote}
             value={note.title}
             onChange={(e) => edit({ title: e.target.value })}
             placeholder="给这个想法一个标题"
@@ -287,7 +332,8 @@ export function Notes() {
             <input
               aria-label="笔记标签"
               placeholder="标签，用逗号分隔"
-              value={note.tags.join(",")}
+              key={note.id}
+              defaultValue={note.tags.join(",")}
               onChange={(e) =>
                 edit({
                   tags: e.target.value
@@ -303,6 +349,7 @@ export function Notes() {
               <span className="editor-label">MARKDOWN</span>
               <textarea
                 aria-label="Markdown 内容"
+                disabled={busy || loadingNote}
                 value={note.body}
                 onChange={(e) => edit({ body: e.target.value })}
                 placeholder={
@@ -324,6 +371,9 @@ export function Notes() {
               <Link2 size={16} />
               资料引用
             </h3>
+            <button type="button" onClick={() => setPickerOpen(true)}>
+              添加资料引用
+            </button>
             {note.sources.length ? (
               note.sources.map((s, index) => (
                 <div className="citation-card" key={index}>
@@ -349,40 +399,90 @@ export function Notes() {
               ))
             ) : (
               <p className="subtle">
-                在资料阅读页选择“创建引用笔记”，即可保留可追溯的原文片段。
+                添加资料引用，或在资料阅读页创建引用笔记，保留可追溯的原文片段。
               </p>
             )}
             <div className="links-grid">
               <div>
                 <h3>引用的笔记</h3>
-                {note.outgoing_links.map((n) => (
-                  <Link key={n.id} to={"/notes?id=" + n.id}>
+                {note.outgoing_links.map((n, index) => (
+                  <Link key={`${n.id}-${index}`} to={"/notes?id=" + n.id}>
                     {n.title}
                   </Link>
                 ))}
               </div>
               <div>
                 <h3>反向链接</h3>
-                {note.backlinks.map((n) => (
-                  <Link key={n.id} to={"/notes?id=" + n.id}>
+                {note.backlinks.map((n, index) => (
+                  <Link key={`${n.id}-${index}`} to={"/notes?id=" + n.id}>
                     {n.title}
                   </Link>
                 ))}
               </div>
             </div>
-            {note.unresolved_links.map((n, index) => (
-              <p className="subtle" key={index}>
-                [[{n.raw_title}]] ·{" "}
-                {n.reason === "ambiguous"
-                  ? "有多个同名笔记"
-                  : n.reason === "deleted"
-                    ? "原目标已删除"
-                    : "目标尚未创建"}
-              </p>
+            {!!note.unresolved_links.length && (
+              <>
+                <ErrorMessage error={targetsError} />
+                {dirty && (
+                  <p className="subtle">请先保存笔记，再选择链接目标。</p>
+                )}
+              </>
+            )}
+            {note.unresolved_links.map((n) => (
+              <div key={n.raw_title}>
+                <p className="subtle">
+                  [[{n.raw_title}]] ·{" "}
+                  {n.reason === "ambiguous"
+                    ? "有多个同名笔记"
+                    : n.reason === "deleted"
+                      ? "原目标已删除"
+                      : "目标尚未创建"}
+                </p>
+                <select
+                  aria-label={`为 [[${n.raw_title}]] 选择目标笔记`}
+                  value={linkChoices[n.raw_title] || ""}
+                  disabled={dirty || busy || targetsLoading || !!targetsError}
+                  onChange={(event) =>
+                    setLinkChoices((choices) => ({
+                      ...choices,
+                      [n.raw_title]: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">
+                    {targetsLoading ? "正在读取笔记…" : "请选择目标笔记"}
+                  </option>
+                  {allNotes.map((target) => (
+                    <option key={target.id} value={target.id}>
+                      {target.title} · {target.body?.slice(0, 50) || "空白笔记"}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  aria-label={`确认链接 [[${n.raw_title}]]`}
+                  disabled={
+                    dirty ||
+                    busy ||
+                    targetsLoading ||
+                    !!targetsError ||
+                    !linkChoices[n.raw_title]
+                  }
+                  onClick={() => resolveLink(n.raw_title)}
+                >
+                  确认链接
+                </button>
+              </div>
             ))}
           </div>
         </form>
       </div>
+      {pickerOpen && (
+        <SourcePicker
+          onClose={() => setPickerOpen(false)}
+          onAdd={(source) => edit({ sources: [...note.sources, source] })}
+        />
+      )}
     </>
   );
 }

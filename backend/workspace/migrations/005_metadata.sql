@@ -1,0 +1,1 @@
+ALTER TABLE documents ADD COLUMN relative_path TEXT NOT NULL DEFAULT '';

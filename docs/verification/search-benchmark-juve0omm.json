@@ -1,0 +1,371 @@
+{
+  "scope": "Search-only: direct production search() over synthetic SQLite/FTS index; no import, model, embedding, HTTP, or UI benchmark",
+  "started_at": "2026-10-13T07:26:26.943686+00:00",
+  "environment": {
+    "platform": "macOS-26.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "python": "3.13.7",
+    "sqlite": "3.50.4",
+    "cpu_count": 10
+  },
+  "working_tree_tested": true,
+  "commit_claim": null,
+  "source_sha256_before": {
+    "backend/workspace/learning_schema.sql": "c80918755dbf1bcd25786c138424abbf626872b52954289314cda2d16824ba80",
+    "backend/workspace/notes_schema.sql": "b295977b4d747fb8d679bbe5baf073a93d9b2ab7f7bd43ccfb3865c923cbe456",
+    "backend/workspace/schema.sql": "a8e78d2ba342357ec2ee1650e6dd9f5ea351550c153331a56a7b68b830417745",
+    "backend/workspace/migrations/003_ai.sql": "6264430f0e651f491ef2d66e2310f4428125249ad9171633c77787ba86b44833",
+    "backend/workspace/migrations/005_metadata.sql": "69c9bdb7989ea1f8b7b934e4af76122ce5f51b132199ac84f5bb0debf6588ae8",
+    "backend/workspace/search.py": "acc0208ac1e24695bd7cb8fded9401197eba14d9bede99245fce293ed81cc3f6",
+    "backend/workspace/db.py": "2b151e6e416efaf86fa4cbd38f092127e40e109876315dbbc938a44a36368db0"
+  },
+  "command": "TMPDIR=\"$PWD/.cache/tmp\" .venv/bin/python scripts/benchmark_search.py",
+  "artifact_root": ".cache/system-verification/search-juve0omm",
+  "scale": {
+    "courses": 3,
+    "documents": 200,
+    "versions": 200,
+    "source_units": 10000,
+    "chunks": 10000,
+    "fts_rows": 10000,
+    "synthetic_originals": 200
+  },
+  "measurement": {
+    "total_calls": 30,
+    "calls_per_case": 5,
+    "warmup_calls": 0,
+    "limit": 20,
+    "cache_state": "Uncontrolled OS cache; fresh database just seeded, first-use cost included, subsequent repeats warm",
+    "quantiles": "p50 median; p95 linear interpolation between sorted observations",
+    "threshold": null,
+    "threshold_note": "Descriptive local measurements; no invented acceptance threshold",
+    "rss_scope": "Peak RSS of entire benchmark process, including imports and seed, not search-only incremental RSS"
+  },
+  "passed": true,
+  "seed_seconds": 0.1521,
+  "cases": [
+    {
+      "name": "english_gradient",
+      "params": {
+        "q": "gradient"
+      },
+      "expected_total": 2000,
+      "candidate_chunks": 10000,
+      "calls": 5,
+      "p50_ms": 17.179,
+      "p95_ms": 17.769,
+      "min_ms": 16.929,
+      "max_ms": 17.808
+    },
+    {
+      "name": "english_probability",
+      "params": {
+        "q": "probability"
+      },
+      "expected_total": 2000,
+      "candidate_chunks": 10000,
+      "calls": 5,
+      "p50_ms": 17.102,
+      "p95_ms": 17.36,
+      "min_ms": 16.994,
+      "max_ms": 17.41
+    },
+    {
+      "name": "han_single_character",
+      "params": {
+        "q": "概"
+      },
+      "expected_total": 2000,
+      "candidate_chunks": 10000,
+      "calls": 5,
+      "p50_ms": 17.405,
+      "p95_ms": 17.563,
+      "min_ms": 17.105,
+      "max_ms": 17.563
+    },
+    {
+      "name": "han_spaced_terms",
+      "params": {
+        "q": "条件 概率"
+      },
+      "expected_total": 2000,
+      "candidate_chunks": 10000,
+      "calls": 5,
+      "p50_ms": 21.585,
+      "p95_ms": 21.819,
+      "min_ms": 21.202,
+      "max_ms": 21.837
+    },
+    {
+      "name": "course_kind_tag_scope",
+      "params": {
+        "q": "gradient",
+        "course_id": "course-0",
+        "kind": "txt",
+        "tag": "foundation"
+      },
+      "expected_total": 340,
+      "candidate_chunks": 1700,
+      "calls": 5,
+      "p50_ms": 11.674,
+      "p95_ms": 12.108,
+      "min_ms": 11.446,
+      "max_ms": 12.202
+    },
+    {
+      "name": "document_scope",
+      "params": {
+        "q": "probability",
+        "document_id": "doc-00017"
+      },
+      "expected_total": 10,
+      "candidate_chunks": 50,
+      "calls": 5,
+      "p50_ms": 4.62,
+      "p95_ms": 4.699,
+      "min_ms": 4.556,
+      "max_ms": 4.714
+    }
+  ],
+  "overall": {
+    "calls": 30,
+    "p50_ms": 17.104,
+    "p95_ms": 21.675,
+    "min_ms": 4.556,
+    "max_ms": 21.837
+  },
+  "samples": [
+    {
+      "case": "english_gradient",
+      "iteration": 1,
+      "elapsed_ms": 17.616917,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "english_probability",
+      "iteration": 1,
+      "elapsed_ms": 17.410291,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_single_character",
+      "iteration": 1,
+      "elapsed_ms": 17.562625,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_spaced_terms",
+      "iteration": 1,
+      "elapsed_ms": 21.748292,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "course_kind_tag_scope",
+      "iteration": 1,
+      "elapsed_ms": 12.202417,
+      "total_hits": 340,
+      "returned_hits": 20
+    },
+    {
+      "case": "document_scope",
+      "iteration": 1,
+      "elapsed_ms": 4.71425,
+      "total_hits": 10,
+      "returned_hits": 10
+    },
+    {
+      "case": "english_gradient",
+      "iteration": 2,
+      "elapsed_ms": 17.807625,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "english_probability",
+      "iteration": 2,
+      "elapsed_ms": 17.102292,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_single_character",
+      "iteration": 2,
+      "elapsed_ms": 17.245708,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_spaced_terms",
+      "iteration": 2,
+      "elapsed_ms": 21.584875,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "course_kind_tag_scope",
+      "iteration": 2,
+      "elapsed_ms": 11.6735,
+      "total_hits": 340,
+      "returned_hits": 20
+    },
+    {
+      "case": "document_scope",
+      "iteration": 2,
+      "elapsed_ms": 4.63925,
+      "total_hits": 10,
+      "returned_hits": 10
+    },
+    {
+      "case": "english_gradient",
+      "iteration": 3,
+      "elapsed_ms": 17.179042,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "english_probability",
+      "iteration": 3,
+      "elapsed_ms": 17.160583,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_single_character",
+      "iteration": 3,
+      "elapsed_ms": 17.404583,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_spaced_terms",
+      "iteration": 3,
+      "elapsed_ms": 21.836709,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "course_kind_tag_scope",
+      "iteration": 3,
+      "elapsed_ms": 11.445792,
+      "total_hits": 340,
+      "returned_hits": 20
+    },
+    {
+      "case": "document_scope",
+      "iteration": 3,
+      "elapsed_ms": 4.619583,
+      "total_hits": 10,
+      "returned_hits": 10
+    },
+    {
+      "case": "english_gradient",
+      "iteration": 4,
+      "elapsed_ms": 16.929375,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "english_probability",
+      "iteration": 4,
+      "elapsed_ms": 17.02875,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_single_character",
+      "iteration": 4,
+      "elapsed_ms": 17.104833,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_spaced_terms",
+      "iteration": 4,
+      "elapsed_ms": 21.26825,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "course_kind_tag_scope",
+      "iteration": 4,
+      "elapsed_ms": 11.521792,
+      "total_hits": 340,
+      "returned_hits": 20
+    },
+    {
+      "case": "document_scope",
+      "iteration": 4,
+      "elapsed_ms": 4.556458,
+      "total_hits": 10,
+      "returned_hits": 10
+    },
+    {
+      "case": "english_gradient",
+      "iteration": 5,
+      "elapsed_ms": 16.968708,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "english_probability",
+      "iteration": 5,
+      "elapsed_ms": 16.993625,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_single_character",
+      "iteration": 5,
+      "elapsed_ms": 17.562042,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "han_spaced_terms",
+      "iteration": 5,
+      "elapsed_ms": 21.20225,
+      "total_hits": 2000,
+      "returned_hits": 20
+    },
+    {
+      "case": "course_kind_tag_scope",
+      "iteration": 5,
+      "elapsed_ms": 11.72825,
+      "total_hits": 340,
+      "returned_hits": 20
+    },
+    {
+      "case": "document_scope",
+      "iteration": 5,
+      "elapsed_ms": 4.580041,
+      "total_hits": 10,
+      "returned_hits": 10
+    }
+  ],
+  "checks": {
+    "expected_totals": true,
+    "scope_filters": true,
+    "source_metadata": true,
+    "originals_sha256_and_sizes": true,
+    "foreign_keys": true,
+    "fts_rows_equal_chunks": true
+  },
+  "database_bytes": 10158080,
+  "original_bytes": 1592700,
+  "process_peak_rss_bytes": 56557568,
+  "source_sha256_after": {
+    "backend/workspace/learning_schema.sql": "c80918755dbf1bcd25786c138424abbf626872b52954289314cda2d16824ba80",
+    "backend/workspace/notes_schema.sql": "b295977b4d747fb8d679bbe5baf073a93d9b2ab7f7bd43ccfb3865c923cbe456",
+    "backend/workspace/schema.sql": "a8e78d2ba342357ec2ee1650e6dd9f5ea351550c153331a56a7b68b830417745",
+    "backend/workspace/migrations/003_ai.sql": "6264430f0e651f491ef2d66e2310f4428125249ad9171633c77787ba86b44833",
+    "backend/workspace/migrations/005_metadata.sql": "69c9bdb7989ea1f8b7b934e4af76122ce5f51b132199ac84f5bb0debf6588ae8",
+    "backend/workspace/search.py": "acc0208ac1e24695bd7cb8fded9401197eba14d9bede99245fce293ed81cc3f6",
+    "backend/workspace/db.py": "2b151e6e416efaf86fa4cbd38f092127e40e109876315dbbc938a44a36368db0"
+  },
+  "source_unchanged_during_run": true,
+  "duration_seconds": 0.6086
+}

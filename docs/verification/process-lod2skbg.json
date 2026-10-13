@@ -1,0 +1,451 @@
+{
+  "scope": "Actual loopback uvicorn process persistence and HTTP backup/restore; synthetic PDF/PPTX/DOCX only; no inference",
+  "started_at": "2026-10-13T08:14:39.268735+00:00",
+  "environment": {
+    "python": "3.13.7",
+    "platform": "macOS-26.7-arm64-arm-64bit-Mach-O",
+    "sqlite": "3.50.4"
+  },
+  "working_tree_tested": true,
+  "commit_claim": null,
+  "source_sha256_before": {
+    "backend/workspace/__init__.py": "93ca1b398284c92491f4d2d1cea815d8705708068db7b81ad7c844470b707d0e",
+    "backend/workspace/admission.py": "cf65648541839ae971b2417f3485b343b0679df2f882c5d01c9f94155b686914",
+    "backend/workspace/ai.py": "873993fd63aacff519da664114a05deb1274ff1326fa0b7ae9c082a761b8af8a",
+    "backend/workspace/app.py": "2d1fc822ffacaa18265bc92995aa8ad7d1e0a22d7d7e3e62460ec92a32972428",
+    "backend/workspace/backup.py": "683f6a33b207f4466f8a78c81c6d96ee8b8df9d120f72ff3a6eb6073a771385c",
+    "backend/workspace/citations.py": "6e707bbfaabdbdd3fbd50a1a561d9e693054ec9675c12b9564a2d1df4334b33d",
+    "backend/workspace/configuration.py": "672c23b710cce63d9e042498de62f862cabd807f1b803f9aec925ef951e9e7fb",
+    "backend/workspace/courses.py": "3bee6a64db44f74af2fabfa7c650bbb65014a2030dab6e6578908ce8938a83f6",
+    "backend/workspace/db.py": "2b151e6e416efaf86fa4cbd38f092127e40e109876315dbbc938a44a36368db0",
+    "backend/workspace/diagnostics.py": "e779b9bfdc8bda7cd97a84b2be7e91308c9f9b91c4afa3ddc97a2db0b02143a3",
+    "backend/workspace/documents.py": "c1ff42e98ebee2d3b94dcfb2ef4aabb8676dbf120d4f33d240b69f1060f7bbf0",
+    "backend/workspace/embeddings.py": "df43284f5dce9b6e8a42314b2017d38bfb8ed1983394318427ee3f5c8f9dd481",
+    "backend/workspace/generation.py": "9ec7408e7d8268d658ea72500f9462750fd423bd74dd7a86f5542c2e98009dfc",
+    "backend/workspace/jobs.py": "2c51bd984880f3b2da64683f7047c22111a4ab23c710ac1b186af22a87a3498e",
+    "backend/workspace/learning.py": "c99b7fd44610c7ddea22b27326c31b6cdf56bd04f3f506af236a8fabdba6c4db",
+    "backend/workspace/limits.py": "760e97b7d99dab6f2fa6b273a9ee8a3b0b47bc4645d8ba27fc4f76ff8dcac6d3",
+    "backend/workspace/notes.py": "f45fe7cfdca8c49a748f381b9c4fd351d0369bf4ed62e6a3a4da6b0bba587b60",
+    "backend/workspace/parsing.py": "848b3b310edac29310885c6ec3bac1d87c8c6a5720bebcf70feb9938681b66c8",
+    "backend/workspace/portable.py": "95bc988c1df1e297177c7cd9048a239de632fb018bad77de8c21da3d05165cb4",
+    "backend/workspace/previews.py": "27a48f0764daf5d5190336a29b3ea5e4dbc113283df9f2100b5ba5ae50c784c5",
+    "backend/workspace/providers.py": "44b9fb12aa320d2b1dee18f0c0c7d2f2ad0581722376823de447b9d713fd23c8",
+    "backend/workspace/search.py": "8ba93d7f19543240c07c4370dd8f77fb46b99d7c2118e9098ac8400c8a319648",
+    "backend/workspace/security.py": "579c50cc417094969a4b441e4d3e974224deb703fca21e0e71fa15bd17c749e6",
+    "backend/workspace/learning_schema.sql": "c80918755dbf1bcd25786c138424abbf626872b52954289314cda2d16824ba80",
+    "backend/workspace/migrations/003_ai.sql": "6264430f0e651f491ef2d66e2310f4428125249ad9171633c77787ba86b44833",
+    "backend/workspace/migrations/005_metadata.sql": "69c9bdb7989ea1f8b7b934e4af76122ce5f51b132199ac84f5bb0debf6588ae8",
+    "backend/workspace/notes_schema.sql": "b295977b4d747fb8d679bbe5baf073a93d9b2ab7f7bd43ccfb3865c923cbe456",
+    "backend/workspace/schema.sql": "a8e78d2ba342357ec2ee1650e6dd9f5ea351550c153331a56a7b68b830417745"
+  },
+  "command": "TMPDIR=\"$PWD/.cache/tmp\" .venv/bin/python scripts/verify_persistence.py",
+  "artifact_root": ".cache/system-verification/process-lod2skbg",
+  "processes": [
+    {
+      "command": [
+        "/Users/singsan/Desktop/HKU/academic-workspace/.venv/bin/python",
+        "-m",
+        "uvicorn",
+        "workspace.app:create_app",
+        "--factory",
+        "--app-dir",
+        "backend",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "49815",
+        "--no-access-log"
+      ],
+      "data_root": ".cache/system-verification/process-lod2skbg/data",
+      "bind": "http://127.0.0.1:49815",
+      "pid": 27350,
+      "health_seconds": 0.3408,
+      "exit_code": -15,
+      "exit_seconds": 0.186
+    },
+    {
+      "command": [
+        "/Users/singsan/Desktop/HKU/academic-workspace/.venv/bin/python",
+        "-m",
+        "uvicorn",
+        "workspace.app:create_app",
+        "--factory",
+        "--app-dir",
+        "backend",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "49820",
+        "--no-access-log"
+      ],
+      "data_root": ".cache/system-verification/process-lod2skbg/data",
+      "bind": "http://127.0.0.1:49820",
+      "pid": 27351,
+      "health_seconds": 0.226,
+      "exit_code": -15,
+      "exit_seconds": 0.2411
+    },
+    {
+      "command": [
+        "/Users/singsan/Desktop/HKU/academic-workspace/.venv/bin/python",
+        "-m",
+        "uvicorn",
+        "workspace.app:create_app",
+        "--factory",
+        "--app-dir",
+        "backend",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "49824",
+        "--no-access-log"
+      ],
+      "data_root": ".cache/system-verification/process-lod2skbg/data",
+      "bind": "http://127.0.0.1:49824",
+      "pid": 27352,
+      "health_seconds": 0.3391,
+      "exit_code": -15,
+      "exit_seconds": 0.1859
+    }
+  ],
+  "checks": {
+    "before_restart": {
+      "passed": true,
+      "all_logical_tables_equal": true,
+      "api_snapshots_equal": true,
+      "source_units_equal": true,
+      "search_matches_all_three_documents": true,
+      "originals": [
+        {
+          "kind": "docx",
+          "sha256": "d4bc3fab6fe76dbbb37abb2529e8c0cda54d2776d030b06d1ad5d23c447740f0",
+          "bytes": 37213,
+          "http_and_disk_match": true
+        },
+        {
+          "kind": "pptx",
+          "sha256": "03a1bce3e6b4270c2ddd63968dff07640ff19b53bfbb5af1d01677130f0406f9",
+          "bytes": 32604,
+          "http_and_disk_match": true
+        },
+        {
+          "kind": "pdf",
+          "sha256": "9878068f35f5fe02cb3716a6cff0ce43b3d3c0347dbc4c7e179beee86b61e44f",
+          "bytes": 4160,
+          "http_and_disk_match": true
+        }
+      ]
+    },
+    "after_process_restart": {
+      "passed": true,
+      "all_logical_tables_equal": true,
+      "api_snapshots_equal": true,
+      "source_units_equal": true,
+      "search_matches_all_three_documents": true,
+      "originals": [
+        {
+          "kind": "docx",
+          "sha256": "d4bc3fab6fe76dbbb37abb2529e8c0cda54d2776d030b06d1ad5d23c447740f0",
+          "bytes": 37213,
+          "http_and_disk_match": true
+        },
+        {
+          "kind": "pptx",
+          "sha256": "03a1bce3e6b4270c2ddd63968dff07640ff19b53bfbb5af1d01677130f0406f9",
+          "bytes": 32604,
+          "http_and_disk_match": true
+        },
+        {
+          "kind": "pdf",
+          "sha256": "9878068f35f5fe02cb3716a6cff0ce43b3d3c0347dbc4c7e179beee86b61e44f",
+          "bytes": 4160,
+          "http_and_disk_match": true
+        }
+      ]
+    },
+    "after_restore": {
+      "passed": true,
+      "all_logical_tables_equal": true,
+      "api_snapshots_equal": true,
+      "source_units_equal": true,
+      "search_matches_all_three_documents": true,
+      "originals": [
+        {
+          "kind": "docx",
+          "sha256": "d4bc3fab6fe76dbbb37abb2529e8c0cda54d2776d030b06d1ad5d23c447740f0",
+          "bytes": 37213,
+          "http_and_disk_match": true
+        },
+        {
+          "kind": "pptx",
+          "sha256": "03a1bce3e6b4270c2ddd63968dff07640ff19b53bfbb5af1d01677130f0406f9",
+          "bytes": 32604,
+          "http_and_disk_match": true
+        },
+        {
+          "kind": "pdf",
+          "sha256": "9878068f35f5fe02cb3716a6cff0ce43b3d3c0347dbc4c7e179beee86b61e44f",
+          "bytes": 4160,
+          "http_and_disk_match": true
+        }
+      ]
+    },
+    "after_restored_process_restart": {
+      "passed": true,
+      "all_logical_tables_equal": true,
+      "api_snapshots_equal": true,
+      "source_units_equal": true,
+      "search_matches_all_three_documents": true,
+      "originals": [
+        {
+          "kind": "docx",
+          "sha256": "d4bc3fab6fe76dbbb37abb2529e8c0cda54d2776d030b06d1ad5d23c447740f0",
+          "bytes": 37213,
+          "http_and_disk_match": true
+        },
+        {
+          "kind": "pptx",
+          "sha256": "03a1bce3e6b4270c2ddd63968dff07640ff19b53bfbb5af1d01677130f0406f9",
+          "bytes": 32604,
+          "http_and_disk_match": true
+        },
+        {
+          "kind": "pdf",
+          "sha256": "9878068f35f5fe02cb3716a6cff0ce43b3d3c0347dbc4c7e179beee86b61e44f",
+          "bytes": 4160,
+          "http_and_disk_match": true
+        }
+      ]
+    }
+  },
+  "passed": true,
+  "ids": {
+    "course": "07f8b2c24e0d44d8bbfef0c8b9ee936f",
+    "documents": [
+      "74167c501f4941afbfbdf87c93dbfb58",
+      "02f9e3bf1c134d879096a9b6cd590e2a",
+      "9cf979564c7645218d4da83cc13bcca3"
+    ],
+    "notes": [
+      "219eb90ebfe0459186a5d76446381bf3",
+      "d1f1055eec7e44eeb8debb5fab60e259"
+    ],
+    "card": "db9f39cec6a84a5093a44afa613271a3",
+    "quiz": "8893daf0e79541bfba4006fbf9312ba5",
+    "attempt": "8d47e69e54d44c27a2bd6c5147399e10",
+    "conversation": "13e5d4d4381e483d8f26afc3de3fc7d2",
+    "agent_token_id": "6bfdcce5aaad4434bb92c3e40b900baa"
+  },
+  "source_positions": [
+    {
+      "document_id": "74167c501f4941afbfbdf87c93dbfb58",
+      "version_id": "436dcb46180746088d8d656dc2f2e9cf",
+      "locator_type": "paragraph",
+      "locator": 2,
+      "quote": "Gradient descent",
+      "kind": "docx"
+    },
+    {
+      "document_id": "02f9e3bf1c134d879096a9b6cd590e2a",
+      "version_id": "b5368ec46f4340dbb317ba8e362ef5bc",
+      "locator_type": "slide",
+      "locator": 1,
+      "quote": "Gradient descent",
+      "kind": "pptx"
+    },
+    {
+      "document_id": "9cf979564c7645218d4da83cc13bcca3",
+      "version_id": "01113a4aa5354d88a9e4a6747121b1ad",
+      "locator_type": "page",
+      "locator": 1,
+      "quote": "Gradient descent",
+      "kind": "pdf"
+    }
+  ],
+  "logical_tables": {
+    "activities": {
+      "count": 8,
+      "sha256": "9649008898213bdf25d3e8e959dd476b6cdf7fdada310d1310ead9c2ee9da770"
+    },
+    "attempt_answers": {
+      "count": 1,
+      "sha256": "9d28acc76004b1717c33f424e606fbd43068e3c0fa21df85d6c5044b7597b6d4"
+    },
+    "attempts": {
+      "count": 1,
+      "sha256": "bac541ccff6edcfaf0f3b20dabec2ee9aa6841fdd16492cbfab0146b77a2700e"
+    },
+    "blobs": {
+      "count": 3,
+      "sha256": "20acc560db3bcbf1caeff3804b83898fd56d11368c8f385889561aafbe595fad"
+    },
+    "chunks": {
+      "count": 19,
+      "sha256": "ce41f799390b876bc139e6ebb4a69ed3beb5630989f718061e9e024c21421a18"
+    },
+    "chunks_fts": {
+      "count": 19,
+      "sha256": "2a99330f1e3a888b600e28175b34b4dfe9343738bc654385400d3d4320965729"
+    },
+    "conversations": {
+      "count": 1,
+      "sha256": "b5f152f054aef5fd0f01479474c426546aaeeae13d6a15184809373cc2ab2753"
+    },
+    "courses": {
+      "count": 1,
+      "sha256": "74bd87ac1f8961f8b187d91c063c1103a06f1eaf02ae3aabc1f5fd75c4c0da9e"
+    },
+    "document_courses": {
+      "count": 3,
+      "sha256": "bd2d33f85aa0dc86ccbe85e015251e1edf3e01d71f8cf5e1cc5ba099d87a1b9f"
+    },
+    "document_links": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "document_versions": {
+      "count": 3,
+      "sha256": "5636904c94b9c7ca31121c177171d64bb54a8105a039f3d6859d22e33b972b78"
+    },
+    "documents": {
+      "count": 3,
+      "sha256": "080848cb8e6bd0d9ac19b748701bbf2250e3beb116b05f02ad0f9cd65dd762d3"
+    },
+    "embedding_runs": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "embedding_staging": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "embeddings": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "flashcards": {
+      "count": 1,
+      "sha256": "346fc509a88d6fe1068a3a41024e377c38b96b8d952d89f421ef0c37679a78c3"
+    },
+    "jobs": {
+      "count": 3,
+      "sha256": "1bdf0e9b6b2981d0d97bd3b86236166ba652731802915d4f384830788c741e35"
+    },
+    "messages": {
+      "count": 2,
+      "sha256": "4483a0b083d74eec4edd53cf9ada75d9eb32df17d8ade584aff048aea6740f28"
+    },
+    "note_links": {
+      "count": 1,
+      "sha256": "66c08cd4f4f90c582b4745625253c4d9a4def72fe69e4a5207a7446fea89e130"
+    },
+    "note_sources": {
+      "count": 3,
+      "sha256": "f8e074d235fb3552e2aa7d88f10e9bfa983bbcfbf307d5a6725ce1bc50ce1616"
+    },
+    "notes": {
+      "count": 2,
+      "sha256": "f7ebdca0d966bf23063bb29934300eec3a027129cee74df6edcafc2e4d9045c9"
+    },
+    "notes_fts": {
+      "count": 2,
+      "sha256": "8fa151889d037e8801296cd65c8caa23ab2b0fabf166ccb3f3539532acdff140"
+    },
+    "quiz_questions": {
+      "count": 1,
+      "sha256": "ee3b4e6469d2b473b5a3920003da045928bbd90008c2b70fd5cedcc32a879120"
+    },
+    "quizzes": {
+      "count": 1,
+      "sha256": "5cb8ab6da2ad1adec98a670de9dea5827da5fad691dcd62142f295fe8ef4bbba"
+    },
+    "reviews": {
+      "count": 1,
+      "sha256": "c2e7294c66167be5f5e8ef3a40f4dd8ec0676513608c358e026eda35962dd4f2"
+    },
+    "schema_migrations": {
+      "count": 5,
+      "sha256": "8f9d23d4e64089c6a41125c4cdb3f2c4180e0a3c5d02c58512fedb2ddaffe85d"
+    },
+    "settings": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "source_units": {
+      "count": 19,
+      "sha256": "035c4e1227d1d4e63cae78893b6b238dc6f0280c39da25752fd4cfee55fd669a"
+    }
+  },
+  "counts": {
+    "activities": 8,
+    "attempt_answers": 1,
+    "attempts": 1,
+    "blobs": 3,
+    "chunks": 19,
+    "chunks_fts": 19,
+    "conversations": 1,
+    "courses": 1,
+    "document_courses": 3,
+    "document_links": 0,
+    "document_versions": 3,
+    "documents": 3,
+    "embedding_runs": 0,
+    "embedding_staging": 0,
+    "embeddings": 0,
+    "flashcards": 1,
+    "jobs": 3,
+    "messages": 2,
+    "note_links": 1,
+    "note_sources": 3,
+    "notes": 2,
+    "notes_fts": 2,
+    "quiz_questions": 1,
+    "quizzes": 1,
+    "reviews": 1,
+    "schema_migrations": 5,
+    "settings": 0,
+    "source_units": 19
+  },
+  "restore": {
+    "recovery_root": ".cache/system-verification/process-lod2skbg/data/recovery/a8e9bf44fa914acf9a6024b4e83c3428",
+    "extra_state_removed": true,
+    "extra_state_in_recovery": true,
+    "sessions_invalidated": true,
+    "agent_tokens_scrubbed_from_backup_and_restore": true,
+    "old_agent_token_rejected": true,
+    "backup_sha256": "372d631f8783e036e0c8842f3e22609477be1f414502c3c37befbf987eb4c2a3"
+  },
+  "source_sha256_after": {
+    "backend/workspace/__init__.py": "93ca1b398284c92491f4d2d1cea815d8705708068db7b81ad7c844470b707d0e",
+    "backend/workspace/admission.py": "cf65648541839ae971b2417f3485b343b0679df2f882c5d01c9f94155b686914",
+    "backend/workspace/ai.py": "873993fd63aacff519da664114a05deb1274ff1326fa0b7ae9c082a761b8af8a",
+    "backend/workspace/app.py": "2d1fc822ffacaa18265bc92995aa8ad7d1e0a22d7d7e3e62460ec92a32972428",
+    "backend/workspace/backup.py": "683f6a33b207f4466f8a78c81c6d96ee8b8df9d120f72ff3a6eb6073a771385c",
+    "backend/workspace/citations.py": "6e707bbfaabdbdd3fbd50a1a561d9e693054ec9675c12b9564a2d1df4334b33d",
+    "backend/workspace/configuration.py": "672c23b710cce63d9e042498de62f862cabd807f1b803f9aec925ef951e9e7fb",
+    "backend/workspace/courses.py": "3bee6a64db44f74af2fabfa7c650bbb65014a2030dab6e6578908ce8938a83f6",
+    "backend/workspace/db.py": "2b151e6e416efaf86fa4cbd38f092127e40e109876315dbbc938a44a36368db0",
+    "backend/workspace/diagnostics.py": "e779b9bfdc8bda7cd97a84b2be7e91308c9f9b91c4afa3ddc97a2db0b02143a3",
+    "backend/workspace/documents.py": "c1ff42e98ebee2d3b94dcfb2ef4aabb8676dbf120d4f33d240b69f1060f7bbf0",
+    "backend/workspace/embeddings.py": "df43284f5dce9b6e8a42314b2017d38bfb8ed1983394318427ee3f5c8f9dd481",
+    "backend/workspace/generation.py": "9ec7408e7d8268d658ea72500f9462750fd423bd74dd7a86f5542c2e98009dfc",
+    "backend/workspace/jobs.py": "2c51bd984880f3b2da64683f7047c22111a4ab23c710ac1b186af22a87a3498e",
+    "backend/workspace/learning.py": "c99b7fd44610c7ddea22b27326c31b6cdf56bd04f3f506af236a8fabdba6c4db",
+    "backend/workspace/limits.py": "760e97b7d99dab6f2fa6b273a9ee8a3b0b47bc4645d8ba27fc4f76ff8dcac6d3",
+    "backend/workspace/notes.py": "f45fe7cfdca8c49a748f381b9c4fd351d0369bf4ed62e6a3a4da6b0bba587b60",
+    "backend/workspace/parsing.py": "848b3b310edac29310885c6ec3bac1d87c8c6a5720bebcf70feb9938681b66c8",
+    "backend/workspace/portable.py": "95bc988c1df1e297177c7cd9048a239de632fb018bad77de8c21da3d05165cb4",
+    "backend/workspace/previews.py": "27a48f0764daf5d5190336a29b3ea5e4dbc113283df9f2100b5ba5ae50c784c5",
+    "backend/workspace/providers.py": "44b9fb12aa320d2b1dee18f0c0c7d2f2ad0581722376823de447b9d713fd23c8",
+    "backend/workspace/search.py": "8ba93d7f19543240c07c4370dd8f77fb46b99d7c2118e9098ac8400c8a319648",
+    "backend/workspace/security.py": "579c50cc417094969a4b441e4d3e974224deb703fca21e0e71fa15bd17c749e6",
+    "backend/workspace/learning_schema.sql": "c80918755dbf1bcd25786c138424abbf626872b52954289314cda2d16824ba80",
+    "backend/workspace/migrations/003_ai.sql": "6264430f0e651f491ef2d66e2310f4428125249ad9171633c77787ba86b44833",
+    "backend/workspace/migrations/005_metadata.sql": "69c9bdb7989ea1f8b7b934e4af76122ce5f51b132199ac84f5bb0debf6588ae8",
+    "backend/workspace/notes_schema.sql": "b295977b4d747fb8d679bbe5baf073a93d9b2ab7f7bd43ccfb3865c923cbe456",
+    "backend/workspace/schema.sql": "a8e78d2ba342357ec2ee1650e6dd9f5ea351550c153331a56a7b68b830417745"
+  },
+  "source_unchanged_during_run": true,
+  "duration_seconds": 2.0701,
+  "all_owned_servers_stopped": true
+}

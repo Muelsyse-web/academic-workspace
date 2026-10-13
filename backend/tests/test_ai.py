@@ -29,7 +29,7 @@ def test_grounded_answer_persists_real_sources_and_scope(tmp_path):
         doc=upload(c,'ml.md','# Gradient descent\n梯度下降使用导数更新参数'.encode(),course['id'])
         upload(c,'other.md',b'Gradient descent in an unrelated course')
         conversation=c.post('/api/v1/conversations',json={'title':'Study','course_id':course['id']}).json()
-        r=c.post('/api/v1/conversations/'+conversation['id']+'/messages',json={'content':'梯度下降'})
+        r=c.post('/api/v1/conversations/'+conversation['id']+'/messages',json={'content':'什么是梯度下降？'})
         assert r.status_code==200,r.text
         answer=r.json()
         assert answer['status']=='citations_verified'
@@ -109,3 +109,30 @@ def test_mixed_indexed_and_unindexed_documents_share_ranking_scale(tmp_path):
             con.execute('INSERT INTO embeddings SELECT id,?,?,2,?,? FROM chunks WHERE document_id=?',('http://127.0.0.1:1234/v1','m','[1,0]',now(),indexed['id']))
         evidence=retrieve_evidence(app.state.db,'gradient',document_ids=[indexed['id'],unindexed['id']],app=app)
         assert all(hit['document_id']==indexed['id'] for hit in evidence)
+
+
+def test_cancellation_releases_conversation_before_provider_timeout(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+    from workspace.providers import ProviderCancelled
+    entered=threading.Event()
+    class SlowProvider:
+        def chat(self,messages):
+            entered.set()
+            threading.Event().wait(2)
+            return '{}'
+        def chat_cancellable(self,messages,cancel_event):
+            entered.set()
+            cancel_event.wait(2)
+            raise ProviderCancelled('cancelled')
+    app=create_app(tmp_path);app.state.provider_override=SlowProvider()
+    with TestClient(app,base_url='http://localhost') as c:
+        login(c);upload(c,'slow.txt',b'Gradient descent uses derivatives')
+        conversation=c.post('/api/v1/conversations',json={}).json()
+        path='/api/v1/conversations/'+conversation['id']
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future=pool.submit(c.post,path+'/messages',json={'content':'gradient'})
+            assert entered.wait(timeout=1)
+            assert c.post(path+'/cancel').status_code==200
+            assert future.result(timeout=.8).json()['status']=='cancelled'
+        assert not app.state.conversation_locks[conversation['id']].locked()

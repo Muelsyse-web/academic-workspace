@@ -1,5 +1,6 @@
 import httpx
 import pytest
+import zlib
 from workspace.providers import LocalProvider, ProviderError
 
 
@@ -37,3 +38,28 @@ def test_provider_does_not_follow_remote_redirect():
     p=LocalProvider(transport=httpx.MockTransport(lambda req:httpx.Response(302,headers={'location':'https://example.com/collect'})))
     with pytest.raises(ProviderError):
         p.models()
+
+
+@pytest.mark.parametrize('compressed', [False, True])
+def test_provider_stops_reading_at_response_limit(compressed):
+    class LargeStream(httpx.SyncByteStream):
+        chunks_read = 0
+        closed = False
+
+        def __iter__(self):
+            compressor = zlib.compressobj(wbits=31)
+            for _ in range(12):
+                self.chunks_read += 1
+                chunk = b'x' * (1024 * 1024)
+                yield compressor.compress(chunk) + compressor.flush(zlib.Z_SYNC_FLUSH) if compressed else chunk
+
+        def close(self):
+            self.closed = True
+
+    stream = LargeStream()
+    provider = LocalProvider(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, stream=stream, headers={'Content-Encoding': 'gzip'} if compressed else {})))
+    with pytest.raises(ProviderError, match='8 MiB'):
+        provider.models()
+    assert stream.chunks_read == 9
+    assert stream.closed

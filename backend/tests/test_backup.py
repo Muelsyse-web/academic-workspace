@@ -115,6 +115,7 @@ def test_restore_roundtrip_existing_recovery_and_restart(tmp_path):
 
 
 @pytest.mark.parametrize('mode',['checksum','traversal','missing','unknown','duplicate','symlink','bad_zip','schema','newer','foreign_key'])
+@pytest.mark.filterwarnings("ignore:Duplicate name:UserWarning")
 def test_invalid_archives_leave_current_library_unchanged(tmp_path, mode):
     c, db = client_for(tmp_path/'source')
     sha = populate(db)

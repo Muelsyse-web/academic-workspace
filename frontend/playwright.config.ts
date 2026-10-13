@@ -11,11 +11,18 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [{ name: "desktop", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    command:
-      'WORKSPACE_DATA_DIR="$PWD/../.cache/e2e-data" WORKSPACE_PORT=8766 ../scripts/start.sh',
-    url: "http://127.0.0.1:8766/api/v1/health",
-    reuseExistingServer: false,
-    timeout: 30000,
-  },
+  webServer: [
+    {
+      command: "../.venv/bin/python ../scripts/e2e_server.py",
+      url: "http://127.0.0.1:8766/api/v1/health",
+      reuseExistingServer: false,
+      timeout: 30000,
+    },
+    {
+      command: "../.venv/bin/python ../scripts/mock_model_server.py",
+      url: "http://127.0.0.1:18765/v1/models",
+      reuseExistingServer: false,
+      timeout: 30000,
+    },
+  ],
 });

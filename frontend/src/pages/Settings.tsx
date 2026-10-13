@@ -1,3 +1,4 @@
+import { DataControls } from "../components/DataControls";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   PlugZap,
@@ -294,6 +295,7 @@ export function Settings() {
           </p>
         </section>
       </div>
+      <DataControls onChange={() => setRevision((v) => v + 1)} />
     </>
   );
 }

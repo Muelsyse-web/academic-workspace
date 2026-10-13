@@ -1,5 +1,6 @@
 """Source-verified Markdown notes, durable wiki links, and portable exports."""
 from io import BytesIO
+import hashlib
 import json
 import re
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -54,6 +55,17 @@ class NotePatch(BaseModel):
     topic: str | None = None
     tags: list[str] | None = None
     sources: list[SourceInput] | None = None
+
+
+class LinkChoice(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    raw_title: str = Field(min_length=1)
+    target_id: str = Field(min_length=1)
+
+
+def _export_basename(identifier):
+    # Restored TEXT primary keys are untrusted paths and header values.
+    return identifier if re.fullmatch(r'[0-9a-f]{32}', identifier) else hashlib.sha256(identifier.encode('utf-8')).hexdigest()
 
 
 def _row(row):
@@ -185,7 +197,7 @@ def export_notes(request: Request):
     archive = BytesIO()
     with ZipFile(archive, 'w', compression=ZIP_DEFLATED) as output:
         for note in notes:
-            output.writestr(note['id']+'.md', _markdown(note))
+            output.writestr(_export_basename(note['id'])+'.md', _markdown(note))
         output.writestr('manifest.json', json.dumps({'version':1,'notes':notes}, ensure_ascii=False, indent=2))
     return Response(archive.getvalue(), media_type='application/zip',
                     headers={'Content-Disposition':'attachment; filename="notes.zip"'})
@@ -226,9 +238,23 @@ def delete_note(identifier: str, request: Request):
     return Response(status_code=204)
 
 
+@router.put('/notes/{identifier}/links')
+def choose_link(identifier: str, choice: LinkChoice, request: Request):
+    with request.app.state.db.connect() as con:
+        _require_note(con, identifier)
+        _require_note(con, choice.target_id)
+        if not con.execute('SELECT 1 FROM note_links WHERE source_id=? AND raw_title=?',
+                           (identifier, choice.raw_title)).fetchone():
+            raise HTTPException(404, 'Link not found in note')
+        con.execute('UPDATE note_links SET target_id=?,deleted_target_id=NULL WHERE source_id=? AND raw_title=?',
+                    (choice.target_id, identifier, choice.raw_title))
+        con.execute('UPDATE notes SET updated_at=? WHERE id=?', (now(), identifier))
+        return _detail(con, identifier)
+
+
 @router.get('/notes/{identifier}/export')
 def export_note(identifier: str, request: Request):
     with request.app.state.db.connect() as con:
         note = _detail(con, identifier)
     return Response(_markdown(note), media_type='text/markdown; charset=utf-8',
-                    headers={'Content-Disposition':f'attachment; filename="{note["id"]}.md"'})
+                    headers={'Content-Disposition':f'attachment; filename="{_export_basename(note["id"])}.md"'})

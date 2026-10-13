@@ -2,22 +2,35 @@ import { useEffect, useState, type ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, LoaderCircle, FolderOpen } from "lucide-react";
 import { api } from "../api";
-export function useData<T>(path: string, initial: T, refresh = 0) {
+export function useData<T>(path: string | null, initial: T, refresh = 0) {
   const [data, setData] = useState<T>(initial),
     [error, setError] = useState(""),
-    [loading, setLoading] = useState(true);
+    [loading, setLoading] = useState(true),
+    [loadedPath, setLoadedPath] = useState<string | null | undefined>(
+      undefined,
+    );
   useEffect(() => {
     let active = true;
+    if (path === null) {
+      setData(initial);
+      setLoadedPath(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     api<T>(path)
       .then((value) => {
         if (active) {
           setData(value);
+          setLoadedPath(path);
           setError("");
         }
       })
       .catch((e) => {
-        if (active) setError(e.message);
+        if (active) {
+          setError(e.message);
+          setLoadedPath(path);
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -26,7 +39,12 @@ export function useData<T>(path: string, initial: T, refresh = 0) {
       active = false;
     };
   }, [path, refresh]);
-  return { data, setData, error, loading };
+  return {
+    data: loadedPath === path ? data : initial,
+    setData,
+    error: loadedPath === path ? error : "",
+    loading: path !== null && (loading || loadedPath !== path),
+  };
 }
 export function ErrorMessage({ error }: { error: string }) {
   return error ? (

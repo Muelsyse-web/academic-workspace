@@ -213,3 +213,73 @@ def test_deleted_target_never_silently_retargets_same_title(notes, duplicate_bef
     restarted.patch('/api/v1/notes/'+linked['id'], json={'body':'No links'})
     recreated = restarted.patch('/api/v1/notes/'+linked['id'], json={'body':'[[Same]]'}).json()
     assert recreated['outgoing_links'][0]['id'] == replacement['id']
+
+
+def test_explicit_ambiguous_link_choice_survives_rename(notes):
+    client, _ = notes
+    create(client, title='Same')
+    target = create(client, title='Same')
+    row = create(client, body='[[Same]]')
+    response = client.put('/api/v1/notes/'+row['id']+'/links', json={'raw_title':'Same','target_id':target['id']})
+    assert response.status_code == 200
+    assert response.json()['unresolved_links'] == []
+    assert response.json()['outgoing_links'] == [{'id':target['id'],'title':'Same','raw_title':'Same'}]
+    client.patch('/api/v1/notes/'+target['id'], json={'title':'Renamed'})
+    actual = client.patch('/api/v1/notes/'+row['id'], json={'body':'Edited [[Same]]'}).json()
+    assert actual['outgoing_links'] == [{'id':target['id'],'title':'Renamed','raw_title':'Same'}]
+
+
+def test_explicit_link_choice_clears_deleted_binding(notes):
+    client, db = notes
+    original = create(client, title='Old')
+    row = create(client, body='[[Old]] [[Missing]]')
+    client.delete('/api/v1/notes/'+original['id'])
+    target = create(client, title='Different title')
+    for raw in ['Old', 'Missing']:
+        response = client.put('/api/v1/notes/'+row['id']+'/links', json={'raw_title':raw,'target_id':target['id']})
+        assert response.status_code == 200
+    assert response.json()['unresolved_links'] == []
+    assert db.one('SELECT deleted_target_id FROM note_links WHERE source_id=? AND raw_title=?', (row['id'],'Old'))['deleted_target_id'] is None
+
+
+@pytest.mark.parametrize('invalid', ['target','raw_title','source'])
+def test_explicit_link_invalid_reference_is_404_and_rolls_back(notes, invalid):
+    client, _ = notes
+    target = create(client, title='Target')
+    row = create(client, body='[[Missing]]')
+    response = client.put('/api/v1/notes/'+('absent' if invalid == 'source' else row['id'])+'/links', json={
+        'raw_title':'Not in body' if invalid == 'raw_title' else 'Missing',
+        'target_id':'absent' if invalid == 'target' else target['id'],
+    })
+    assert response.status_code == 404
+    assert client.get('/api/v1/notes/'+row['id']).json() == row
+
+
+def test_restored_unsafe_note_ids_export_as_safe_deterministic_names(tmp_path):
+    import hashlib
+    from urllib.parse import quote
+    from workspace.backup import router as backup_router
+    client, db = note_client(tmp_path/'source')
+    client.app.include_router(backup_router)
+    client.app.state.sessions = {}
+    client.app.state.conversation_locks = {}
+    ids = ['../../outside', 'quoted"中文']
+    with db.connect() as con:
+        for identifier in ids:
+            con.execute('INSERT INTO notes(id,title,body,created_at,updated_at) VALUES (?,?,?,?,?)', (identifier,'Restored note','Content',now(),now()))
+    backup = client.get('/api/v1/backup')
+    assert backup.status_code == 200
+    restored, _ = note_client(tmp_path/'restored')
+    restored.app.include_router(backup_router)
+    restored.app.state.sessions = {}
+    restored.app.state.conversation_locks = {}
+    response = restored.post('/api/v1/restore', files={'archive':('backup.zip',backup.content,'application/zip')}, data={'confirm':'RESTORE'})
+    assert response.status_code == 200, response.text
+    exported = restored.get('/api/v1/notes/export')
+    with ZipFile(BytesIO(exported.content)) as archive:
+        assert set(archive.namelist()) == {'manifest.json', *(hashlib.sha256(i.encode()).hexdigest()+'.md' for i in ids)}
+        assert {n['id'] for n in json.loads(archive.read('manifest.json'))['notes']} == set(ids)
+    single = restored.get('/api/v1/notes/'+quote(ids[1],safe='')+'/export')
+    assert single.status_code == 200
+    assert single.headers['content-disposition'] == 'attachment; filename="'+hashlib.sha256(ids[1].encode()).hexdigest()+'.md"'
+    assert not (tmp_path/'outside.md').exists()

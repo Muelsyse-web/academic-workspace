@@ -44,3 +44,29 @@ it("submits a question in the selected conversation", async () => {
     ),
   );
 });
+
+it("opens a newly created conversation without treating its list as a detail", async () => {
+  const conversation = {
+    id: "c2",
+    title: "New study",
+    course_id: null,
+    document_ids: [],
+    messages: [],
+  };
+  vi.mocked(api).mockImplementation(
+    async <T,>(path: string, options?: RequestInit): Promise<T> => {
+      if (path === "/conversations" && options?.method === "POST")
+        return conversation as T;
+      if (path === "/conversations/c2") return conversation as T;
+      return [] as T;
+    },
+  );
+  render(
+    <MemoryRouter>
+      <Chat />
+    </MemoryRouter>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "新建对话" }));
+  fireEvent.click(screen.getByRole("button", { name: "创建对话" }));
+  expect(await screen.findByLabelText("向资料提问")).toBeInTheDocument();
+});

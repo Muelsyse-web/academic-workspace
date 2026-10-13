@@ -33,8 +33,13 @@ class CoursePatch(BaseModel):
 @router.get('/courses')
 def courses(request: Request):
     return request.app.state.db.all('''SELECT c.*,
-        (SELECT count(*) FROM document_courses dc WHERE dc.course_id=c.id) document_count
-        FROM courses c ORDER BY c.semester DESC,c.name''')
+        (SELECT count(*) FROM document_courses dc WHERE dc.course_id=c.id) document_count,
+        (SELECT count(*) FROM notes n WHERE n.course_id=c.id) note_count,
+        (SELECT count(*) FROM flashcards f WHERE f.course_id=c.id) card_count,
+        (SELECT count(*) FROM flashcards f WHERE f.course_id=c.id AND f.due_at<=?) due_count,
+        (SELECT coalesce(sum(a.total),0) FROM attempts a WHERE a.course_id=c.id) answered_count,
+        (SELECT coalesce(sum(a.score),0) FROM attempts a WHERE a.course_id=c.id) correct_count
+        FROM courses c ORDER BY c.semester DESC,c.name''',(now(),))
 
 
 @router.post('/courses',status_code=201)

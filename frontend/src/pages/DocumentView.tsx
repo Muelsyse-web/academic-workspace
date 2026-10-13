@@ -35,6 +35,19 @@ export function DocumentView() {
       revision,
     ),
     { data: courses } = useData<Course[]>("/courses", []);
+  const { data: allDocuments } = useData<Document[]>(
+    "/documents",
+    [],
+    revision,
+  );
+  const { data: images, error: imageError } = useData<
+    { index: number; width: number; height: number; url: string; alt: string }[]
+  >(doc?.kind === "pptx" ? `/documents/${id}/slides/${page}/images` : null, []);
+  const requestedLocation = params.get("locator");
+  useEffect(
+    () => setPage(Number(requestedLocation || 1)),
+    [id, version, requestedLocation],
+  );
   useEffect(() => {
     if (!doc || !["queued", "processing"].includes(doc.status)) return;
     const timer = setInterval(() => setRevision((v) => v + 1), 1200);
@@ -62,6 +75,7 @@ export function DocumentView() {
             .map((t) => t.trim())
             .filter(Boolean),
           course_ids: f.getAll("courses"),
+          related_ids: f.getAll("related"),
         }),
       });
       setEditing(false);
@@ -89,7 +103,7 @@ export function DocumentView() {
               </span>
               <h1>{doc.title}</h1>
               <p>
-                {doc.filename}
+                {doc.relative_path || doc.filename}
                 {version && version !== doc.active_version
                   ? " · 历史引用版本"
                   : ""}
@@ -141,6 +155,19 @@ export function DocumentView() {
                   src={`/api/v1/documents/${id}/original#page=${page}`}
                   className="pdf-viewer"
                 />
+              )}
+              {doc.kind === "pptx" && (
+                <>
+                  <ErrorMessage error={imageError} />
+                  <div className="slide-images">
+                    {images.map((image) => (
+                      <figure key={image.index}>
+                        <img src={image.url} alt={image.alt} loading="lazy" />
+                        <figcaption>{image.alt}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                </>
               )}
               <div className="extraction-label">
                 {doc.kind === "pdf"
@@ -194,6 +221,18 @@ export function DocumentView() {
               )}
             </div>
           </div>
+          {doc.related_ids.length > 0 && (
+            <section className="panel" style={{ marginTop: 20, padding: 20 }}>
+              <h3>关联资料</h3>
+              {allDocuments
+                .filter((d) => doc.related_ids.includes(d.id))
+                .map((d) => (
+                  <Link className="button" key={d.id} to={"/documents/" + d.id}>
+                    {d.title}
+                  </Link>
+                ))}
+            </section>
+          )}
           <Modal
             open={editing}
             onClose={() => setEditing(false)}
@@ -225,6 +264,24 @@ export function DocumentView() {
                     {c.name}
                   </label>
                 ))}
+              </fieldset>
+              <fieldset>
+                <legend>关联资料</legend>
+                <div className="document-picker">
+                  {allDocuments
+                    .filter((d) => d.id !== doc.id)
+                    .map((d) => (
+                      <label className="checkbox-label" key={d.id}>
+                        <input
+                          type="checkbox"
+                          name="related"
+                          value={d.id}
+                          defaultChecked={doc.related_ids.includes(d.id)}
+                        />
+                        {d.title}
+                      </label>
+                    ))}
+                </div>
               </fieldset>
               <button className="primary">保存资料信息</button>
             </form>
