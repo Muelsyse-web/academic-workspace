@@ -3,7 +3,8 @@
 - Scope is this project directory only. Never read existing personal course files for development.
 - Use `.venv/bin/python`, `.cache/tmp`, `.cache/pip`, `.cache/npm`, project-local browser downloads. No external paid APIs, public servers, or private document uploads.
 - SPEC.md and ARCHITECTURE.md were approved by the user on 2026-10-13. Proceed with implementation and routine choices without repeated design approval.
-- Use `feat/local-academic-workspace`; the new repository itself isolates the user's original directories.
+- Use `main` for ongoing development; the repository itself isolates the user's original directories.
+- On 2026-10-16 the user authorized creating the public GitHub code repository `Muelsyse-web/academic-workspace` and pushing subsequent project changes directly without repeated approval. Commit and push verified changes to `origin/main`; never upload personal course files, secrets, runtime data or dependency directories. This authorization covers publishing source code, not deploying a public application server.
 - Keep parser, DB, search, provider, learning, and API/UI boundaries clear. Use parameterized SQL and migrations.
 - Write meaningful failing tests before business logic. Run relevant pytest, Vitest, build and Playwright checks. Record actual results in PROGRESS.md; distinguish mock from real model tests.
 - User authorized subagents: give disjoint file ownership; do not revert others' edits. Main agent integrates and reviews.

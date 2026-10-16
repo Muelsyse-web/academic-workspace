@@ -2,6 +2,13 @@
 
 面向中英文课程资料的本地学习工作空间。你可以管理课程，导入 PDF、PPTX、DOCX、TXT、Markdown，检索并返回原文，保存引用笔记，创建 Quiz 和复习卡片。连接本机模型后，可使用有来源的问答、语义搜索和学习草稿生成。数据保存在项目内的 SQLite 和原件目录中。
 
+代码仓库：[Muelsyse-web/academic-workspace](https://github.com/Muelsyse-web/academic-workspace)。下载源码：
+
+```sh
+git clone https://github.com/Muelsyse-web/academic-workspace.git
+cd academic-workspace
+```
+
 完整需求见 [SPEC.md](SPEC.md)，实现结构见 [ARCHITECTURE.md](ARCHITECTURE.md)。实际验证结果与待办见 [PROGRESS.md](PROGRESS.md) 和 [ACCEPTANCE.md](ACCEPTANCE.md)；功能存在不等于所有验收已经完成。
 
 ## macOS 安装与启动
